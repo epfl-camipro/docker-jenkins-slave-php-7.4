@@ -1,11 +1,11 @@
-# JNLP Slave for Jenkins - PHP 7.3.2
+# JNLP Slave for Jenkins - PHP 7.4
 
 ## provide dynamic slaves in a Kubernetes/Docker environment
 
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
 [![System Version](https://img.shields.io/badge/version-0.0.1-blue.svg)](VERSION)
 
-This repository will hold our jnlp slave docker image for php 7.3.2 related CI processes and will be part of our kubernetes jenkins cluster experimental workload. Use this image for all php related build processes you want to call inside our gcloud kubernetes cluster jenkins definition.
+This repository will hold our jnlp slave docker image for php 7.4 related CI processes and will be part of our kubernetes jenkins cluster experimental workload. Use this image for all php related build processes you want to call inside our gcloud kubernetes cluster jenkins definition.
 
 ## warning! Experimental php 7.3 slave.
 Possible problems:

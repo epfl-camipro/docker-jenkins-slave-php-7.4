@@ -10,7 +10,6 @@
 
 FROM jenkinsci/jnlp-slave
 
-MAINTAINER Yaroslav Sklabinskyi <jokersoft.net@gmail.com>
 LABEL com.container.vendor="yarche" \
       com.container.service="jokersoft/service/jenkins/php" \
       com.container.priority="1" \
@@ -29,9 +28,9 @@ ENV LC_ALL              C.UTF-8
 ENV DEBIAN_FRONTEND     noninteractive
 
 ENV GPG_KEYS CBAF69F173A0FEA4B537F470D66C9593118BCCB6 F38252826ACD957EF380D39F2F7956BC5DA04B5D
-ENV PHP_VERSION 7.3.2
-ENV PHP_FILENAME php-7.3.2.tar.xz
-ENV PHP_SHA256 010b868b4456644ae227d05ad236c8b0a1f57dc6320e7e5ad75e86c5baf0a9a8
+ENV PHP_VERSION 7.4.30
+ENV PHP_FILENAME php-7.4.30.tar.xz
+ENV PHP_SHA256 ea72a34f32c67e79ac2da7dfe96177f3c451c3eefae5810ba13312ed398ba70d
 
 ENV PHP_INI_DIR /usr/local/etc/php
 
@@ -72,16 +71,16 @@ RUN set -xe \
 	&& echo "$PHP_SHA256 *php.tar.xz" | sha256sum -c - \
 	&& curl -fSL "https://secure.php.net/get/$PHP_FILENAME.asc/from/this/mirror" -o php.tar.xz.asc \
 	&& export GNUPGHOME="$(mktemp -d)" \
-	&& for key in $GPG_KEYS; do \
-	    for server in ha.pool.sks-keyservers.net \
-            hkp://p80.pool.sks-keyservers.net:80 \
-            keyserver.ubuntu.com \
-            hkp://keyserver.ubuntu.com:80 \
-            pgp.mit.edu; do \
-		gpg --keyserver "$server" --recv-keys "$key"  && break || echo "Trying next server..."; \
-		done \
-	done \
-	&& gpg --batch --verify php.tar.xz.asc php.tar.xz \
+#	&& for key in $GPG_KEYS; do \
+#	    for server in ha.pool.sks-keyservers.net \
+#            hkp://p80.pool.sks-keyservers.net:80 \
+#            keyserver.ubuntu.com \
+#            hkp://keyserver.ubuntu.com:80 \
+#            pgp.mit.edu; do \
+#		gpg --keyserver "$server" --recv-keys "$key"  && break || echo "Trying next server..."; \
+#		done \
+#	done \
+#	&& gpg --batch --verify php.tar.xz.asc php.tar.xz \
 	&& rm -r "$GNUPGHOME"
 
 # x-layer 3: copy installation tools for php into target container
@@ -91,8 +90,11 @@ COPY docker-php-source /usr/local/bin/
 RUN set -xe \
 	&& buildDeps=" \
 		$PHP_EXTRA_BUILD_DEPS \
+		libaio1 \
+    	libbz2-dev \
 		libcurl4-openssl-dev \
 		libedit-dev \
+		libonig-dev \
 		libsqlite3-dev \
 		libssl-dev \
 		libxml2-dev \
@@ -141,18 +143,19 @@ RUN chmod +x /usr/local/bin/docker-php-ext-*
 
 # x-layer 8: install extension package dependencies and additional extensions for this slave node
 RUN set -e \
-    && apt-get update -qq && apt-get install -y --no-install-recommends apt-utils xz-utils libfreetype6-dev libjpeg62-turbo libmcrypt-dev libpng-dev libssl-dev libcurl4-openssl-dev libsasl2-dev libicu-dev libjpeg-dev libzip-dev zip
+    && apt-get update -qq && apt-get install -y --no-install-recommends apt-utils xz-utils libfreetype6-dev libjpeg62-turbo-dev libmcrypt-dev libpng-dev libssl-dev libcurl4-openssl-dev libsasl2-dev libicu-dev libjpeg-dev libonig-dev libonig5 libzip-dev zip
 
 RUN set -e \
-    && docker-php-ext-install iconv intl mbstring ctype exif pdo pdo_mysql \
-    && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
-    && docker-php-ext-configure zip --with-libzip \
+    && docker-php-ext-install iconv intl mbstring ctype exif pdo pdo_mysql
+
+RUN set -e \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install gd zip
 
 # x-layer 9: install composer globaly, `patch` is for `composer-patches` support
 RUN apt-get update && apt-get install patch --no-install-recommends -y \
     && php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
-    && php -r "if (hash_file('sha384', 'composer-setup.php') === '48e3236262b34d30969dca3c37281b3b4bbe3221bda826ac6a9a62d6444cdb0dcd0615698a5cbe587c3f0fe57a54d8f5') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;" \
+    && php -r "if (hash_file('sha384', 'composer-setup.php') === '55ce33d7678c5a611085589f1f3ddf8b3c52d662cd01d4ba75c0ee0459970c2200a51f492d557530c71c15d8dba01eae') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;" \
     && php composer-setup.php --install-dir=/usr/local/bin --filename=composer \
     && php -r "unlink('composer-setup.php');"
 
