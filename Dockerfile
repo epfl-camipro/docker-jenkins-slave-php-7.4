@@ -8,7 +8,7 @@
 # VERSION 0.0.1
 #
 
-FROM jenkinsci/jnlp-slave
+FROM jenkins/inbound-agent
 
 LABEL com.container.vendor="yarche" \
       com.container.service="jokersoft/service/jenkins/php" \
